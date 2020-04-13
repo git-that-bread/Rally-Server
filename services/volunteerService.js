@@ -42,7 +42,7 @@ const shiftSignUp = async (shiftInfo) => {
 }
 
 /**
- * volShiftDelete
+ * volShiftDelete - Service Method
  * This method will allow the user to cancel their shift obligation by deleting the volShift object. This will also need to 
  * go to the corresponding event and shift in order to delete the volunteer object ID from volunteers[] in each
  * 
@@ -69,9 +69,36 @@ const volShiftDelete = async(volShiftInfo) => {
         {$pull: {volunteers: volunteer}}
     );
     return;
+};
+
+/**
+ * orgSignUp - Service Method
+ * This method allows a volunteer to "sign up" with an organization. Adds volunteer object ID to org's volunteers[] array
+ * and the org's object ID to volunteer object's organizations[]
+ * @method orgSignUp
+ * @param {reqInfo} reqInfo 
+ * @returns {} - void
+ */
+const orgSignUp = async(reqInfo) => {
+    let volunteer = reqInfo.volunteerID
+    let org = reqInfo.organizationID
+
+    //Update the volunteer object's orgs[], adding the org object ID
+    const addOrgID = await Volunteer.findOneAndUpdate(
+        {_id: volunteer},
+        {$push: {organizations: org}}, {new: true}
+    );
+    //Update the org object's volunteers[], adding the volunteer object ID
+    const addVolID = await Organization.findOneAndUpdate(
+        {_id: org},
+        {$push: {volunteers: volunteer}}, {new: true}
+    );
+
+    return addOrgID;
 }
 
 module.exports = {
     shiftSignUp,
-    volShiftDelete
+    volShiftDelete,
+    orgSignUp
 }

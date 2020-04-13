@@ -87,9 +87,6 @@ async function createShiftsArray(globalStart, globalEnd, numHours, eventID, orga
 async function createShift(startTime, endTime, eventID, organizationID)
 {
     //create shift object
-    console.log('creating shift, start is: ' + startTime);
-    console.log('creating shift, end is: ' + endTime);
-    //console.log('this eventID is: ' + eventID);
     const newShift = new Shift({startTime, endTime, eventID, organizationID});
     const savedShift = await newShift.save();
     //return shift object
@@ -120,7 +117,6 @@ const createEvent = async (eventInfo) => {
     const organizationID = organization;
     const eventID = newEvent.id;
     const savedEvent = await newEvent.save();
-    //console.log('eventID is: ' + eventID);
     //Create shifts. 
     var fullArray = await createShiftsArray(startTime, endTime, numHours, eventID, organizationID);
 
@@ -228,7 +224,42 @@ const verifyShift = async (volShiftInfo) => {
     const deleteVolShift = await volShift.deleteMany({shift: shiftInfo.id});
 
     return;
- }
+ };
+
+ /**
+ * getVolunteerList - Service Method
+ * This method is used to get a list of volunteers associated with an organization
+ * 
+ * @method getVolunteerList
+ * @param {orgInfo} orgInfo - contains the org's object ID
+ * @returns {} - void 
+ */
+const getVolunteerList = async (orgInfo) => {
+    const theOrg = await Organization.findOne({_id: orgInfo.organizationID});
+    var volList = theOrg.volunteers;
+    return volList;
+};
+
+/**
+ * deleteVolunteer - Service Method
+ * This method is used to remove a volunteer from the organization's roster
+ * @method deleteVolunteer
+ * @param {reqInfo} reqInfo - contains organizationID and volunteerID
+ * @returns {} - void
+ */
+const deleteVolunteer = async (reqInfo) => {
+    //Remove volunteer from org object's volunteers[] array
+    const delVolFromOrg = await Organization.findOneAndUpdate(
+        {_id: reqInfo.organizationID},
+        {$pull: {volunteers: reqInfo.volunteerID}}, {new: true}
+    );
+    //Remove org from volunteer object's orgs[] array
+    const delOrgFromVol = await Volunteer.findOneAndUpdate(
+        {_id: reqInfo.volunteerID},
+        {$pull: {organizations: reqInfo.organizationID}}, {new: true}
+    );
+    return delVolFromOrg;
+};
 
 module.exports = {
     createEvent,
@@ -236,5 +267,7 @@ module.exports = {
     updateEvent,
     updateShift,
     deleteShift,
-    verifyShift
+    verifyShift,
+    getVolunteerList,
+    deleteVolunteer
 };

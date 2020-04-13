@@ -25,4 +25,13 @@ router.route('/shift').post(async (req, res, next) => {
     }
 });
 
+router.route('/orgs').post(async (req, res, next) => {
+    try {
+        let orgSignedUp = await volunteerService.orgSignUp(req.body);
+        return res.status(200).json({data: orgSignedUp});
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;
