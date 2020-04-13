@@ -5,10 +5,8 @@
   "main": "app.js",
   "scripts": {
     "start": "node server.js",
-    "client-install": "npm install --prefix ../client",
     "server": "nodemon server.js",
-    "client": "npm start --prefix ../client",
-    "dev": "concurrently \"npm run server\" \"npm run client\"",
+    "dev": "nodemon server.js",
     "lint": "eslint **.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
