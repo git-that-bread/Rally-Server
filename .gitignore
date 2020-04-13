@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 # dependencies
 node_modules
 
@@ -7,4 +8,15 @@ node_modules
 .env.local
 .env.development.local
 .env.test.local
+=======
+# dependencies
+/node_modules
+
+# misc
+.env
+.DS_Store
+.env.local
+.env.development.local
+.env.test.local
+>>>>>>> 81d2358b4fa5f95bdd50163b66550fe3f00c3848
 .env.production.local
