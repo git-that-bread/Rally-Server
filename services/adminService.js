@@ -114,7 +114,6 @@ const createEvent = async (eventInfo) => {
     let location = eventInfo.location;
     
     var numHours = calcHours(endTime, startTime);
-    //console.log('numHours is: ' + numHours);
     //Create new event object 
     var newEvent = new Event({startTime, endTime, organization, location});
     
