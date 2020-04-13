@@ -1,9 +1,11 @@
 const router = require('express').Router();
+const middleware = require('./middleware/middleware');
 const adminService = require('../../services/adminService.js');
 let Volunteer = require('../../models/volunteer.model');
 let Volshift = require('../../models/volunteerShift.model');
 let Event = require('../../models/event.model');
 
+router.use('/', middleware.checkAuthentication);
 
 router.route('/').get((req, res) => {
     Volunteer.find()
