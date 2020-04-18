@@ -95,10 +95,65 @@ const orgSignUp = async(reqInfo) => {
     );
 
     return addOrgID;
-}
+};
+
+/**
+ * getEventList - Service Method
+ * This method is used to provide the volunteer with a list of events that belong to an org
+ * @method getEventList
+ * @param {orgInfo} orgInfo - the object ID of the organization
+ * @returns {flattenedEventList} - an array of event objects associated with the organization
+ */
+const getEventList = async (orgInfo) => {
+    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+    var eventIDs = theOrg.events;
+    var eventList = [];
+    for(i = 0; i < eventIDs.length; i++)
+    {
+        var theEvent = await Event.find({_id: eventIDs[i]});
+        eventList.push(theEvent);
+    }
+    var flattenedEventList = [].concat.apply([], eventList);
+    return flattenedEventList;
+};
+
+/**
+ * getOrgList - Service Method
+ * This method is used to provide the volunteer with a list of events that belong to an org
+ * @method getOrgList
+ * @param {} void
+ * @returns {orgList} - an array of org objects
+ */
+const getOrgList = async () => {
+    var orgList = await Organization.find();
+    return orgList;
+};
+
+/**
+ * getShiftList - Service Method
+ * This method is used to provide the volunteer with a list of events that belong to an org
+ * @method getShiftList
+ * @param {eventInfo} eventInfo - the object ID of the event
+ * @returns {flattenedShiftList} - an array of shift objects associated with the event
+ */
+const getShiftList = async (eventInfo) => {
+    const theEvent = await Event.findOne({_id: eventInfo.eventID});
+    var shiftIDs = theEvent.shifts;
+    var shiftList = [];
+    for(i = 0; i < shiftIDs.length; i++)
+    {
+        var theShift = await Shift.find({_id: shiftIDs[i]});
+        shiftList.push(theShift);
+    }
+    var flattenedShiftList = [].concat.apply([], shiftList);
+    return flattenedShiftList;
+};
 
 module.exports = {
     shiftSignUp,
     volShiftDelete,
+    getEventList,
+    getOrgList,
+    getShiftList,
     orgSignUp
 }

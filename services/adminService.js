@@ -181,7 +181,7 @@ const updateEvent = async (eventInfo) => {
  * This method is used to provide the admin with a list of events that belong to their org
  * @method getEventList
  * @param {orgInfo} orgInfo - the object ID of the organization
- * @returns {eventList} - an array of event objects associated with the organization
+ * @returns {flattenedEventList} - an array of event objects associated with the organization
  */
 const getEventList = async (orgInfo) => {
     const theOrg = await Organization.findOne({_id: orgInfo.orgID});
@@ -192,7 +192,8 @@ const getEventList = async (orgInfo) => {
         var theEvent = await Event.find({_id: eventIDs[i]});
         eventList.push(theEvent);
     }
-    return eventList;
+    var flattenedEventList = [].concat.apply([], eventList);
+    return flattenedEventList;
 };
 
 /**
@@ -252,10 +253,10 @@ const verifyShift = async (volShiftInfo) => {
  * 
  * @method getVolunteerList
  * @param {orgInfo} orgInfo - contains the org's object ID
- * @returns {volList} - an array of volunteer objects associated with the organization 
+ * @returns {flattenedVolList} - an array of volunteer objects associated with the organization 
  */
 const getVolunteerList = async (orgInfo) => {
-    const theOrg = await Organization.findOne({_id: orgInfo.organizationID});
+    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
     var volIDs = theOrg.volunteers;
     var volList = [];
     for(i = 0; i < volIDs.length; i++)
@@ -263,7 +264,8 @@ const getVolunteerList = async (orgInfo) => {
         var thevol = await Volunteer.find({_id: volIDs[i]});
         volList.push(thevol);
     } 
-    return volList;
+    var flattenedVolList = [].concat.apply([], volList);
+    return flattenedVolList;
 };
 
 /**
