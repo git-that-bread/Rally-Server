@@ -175,7 +175,51 @@ const updateEvent = async (eventInfo) => {
     */
    return updateEv;
 };
+/**
+ * viewPendingVols - Service Method
+ * This method is used for the admin the view the volunteers requesting to join the org
+ * @method viewPendingVols
+ * @param {orgInfo} orgInfo - object containing org object ID
+ * @returns {flattenedPendingVolList} - Array of volunteer objects
+ */
+const viewPendingVols = async (orgInfo) => {
+    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+    var pendingVolIDs = theOrg.pendingVolunteers;
+    var pendingVolList = [];
+    for(i = 0; i < pendingVolIDs.length; i++)
+    {
+        var thePendingVol = await Volunteer.find({_id: pendingVolIDs[i]});
+        pendingVolList.push(thePendingVol);
+    }
+    var flattenedPendingVolList = [].concat.apply([], pendingVolList);
+    return flattenedPendingVolList;
+};
 
+/**
+ * approveVol - Service Method
+ * This method is used for the admin to approve a volunteer request to join the org
+ * @method approveVol
+ * @param {rewInfo} reqInfo - object containing org object ID (orgID), and volunteer object ID (volID)
+ * @returns {Volunteer} - Volunteer object added
+ */
+const approveVol = async (reqInfo) => {
+    //Remove the volunteer ID from the pendingVolunteers array of org
+    const removePending = await Organization.findOneAndUpdate(
+        {_id: reqInfo.orgID},
+        {$pull: {pendingVolunteers: reqInfo.volID}}
+    );
+    //Add the volunteer ID to the volunteer array of org
+    const addToVolArray = await Organization.findOneAndUpdate(
+        {_id: reqInfo.orgID},
+        {$addToSet: {volunteers: reqInfo.volID}}, {new: true}
+    );
+    //Update the volunteer object's orgs[], adding the org object ID
+    const updateVol = await Volunteer.findOneAndUpdate(
+        {_id: reqInfo.volID},
+        {$addToSet: {organizations: reqInfo.orgID}}, {new: true}
+    );
+    return updateVol;
+};
 /**
  * getEventList - Service Method
  * This method is used to provide the admin with a list of events that belong to their org
@@ -313,6 +357,8 @@ module.exports = {
     createEvent,
     deleteEvent,
     updateEvent,
+    viewPendingVols,
+    approveVol,
     getEventList,
     updateShift,
     deleteShift,

@@ -51,17 +51,16 @@ const shiftSignUp = async (shiftInfo) => {
  * go to the corresponding event and shift in order to delete the volunteer object ID from volunteers[] in each
  * 
  * @method volShiftDelete
- * @param {volShiftInfo} - an object containing information about the volunteer shift
+ * @param {volShiftInfo} - an object containing the object ID of the volunteerShift object
  * @returns {} - void
  */
 
 const volShiftDelete = async(volShiftInfo) => {
-    let volShiftID = volShiftInfo.volShiftID
-    let volunteer = volShiftInfo.volunteerID
-    let shiftID = volShiftInfo.shiftID
-    let eventID = volShiftInfo.eventID
-    //Delete volunteerShift object
-    const deleteVolShift = await volShift.findOneAndDelete({_id: volShiftID});
+    //First get the volunteerShift object based on the object ID provided
+    const theVolShift = await volShift.findOne({_id: volShiftInfo.volShiftID});
+    let volunteer = theVolShift.volunteer
+    let shiftID = theVolShift.shift
+    let eventID = theVolShift.eventID
     //Remove volunteer from volunteers[] within shift object
     const removeVolFromShift = await Shift.findOneAndUpdate(
         {_id: shiftID},
@@ -72,6 +71,13 @@ const volShiftDelete = async(volShiftInfo) => {
         {_id: eventID},
         {$pull: {volunteers: volunteer}}
     );
+    //Delete volunteerShift object
+    const deleteVolShift = await volShift.findOneAndDelete({_id: volShiftInfo.volShiftID});
+    //Finally, remove the volunteerShift object ID from the volunteer object's shifts[] array
+    const removeShiftFromVol = await Volunteer.findOneAndUpdate(
+        {_id: volunteer},
+        {$pull: {shifts: volShiftInfo.volShiftID}}
+    );
     return;
 };
 
@@ -81,24 +87,15 @@ const volShiftDelete = async(volShiftInfo) => {
  * and the org's object ID to volunteer object's organizations[]
  * @method orgSignUp
  * @param {reqInfo} reqInfo 
- * @returns {addOrgID} - the updated Volunteer object with the organization added
+ * @returns {} - void
  */
 const orgSignUp = async(reqInfo) => {
-    let volunteer = reqInfo.volunteerID
-    let org = reqInfo.organizationID
-
-    //Update the volunteer object's orgs[], adding the org object ID
-    const addOrgID = await Volunteer.findOneAndUpdate(
-        {_id: volunteer},
-        {$addToSet: {organizations: org}}, {new: true}
-    );
-    //Update the org object's volunteers[], adding the volunteer object ID
+    //Update the org object's pendingVolunteers[], adding the volunteer object ID
     const addVolID = await Organization.findOneAndUpdate(
-        {_id: org},
-        {$addToSet: {volunteers: volunteer}}, {new: true}
+        {_id: reqInfo.organizationID},
+        {$addToSet: {pendingVolunteers: reqInfo.volunteerID}}, {new: true}
     );
-
-    return addOrgID;
+    return;
 };
 
 /**

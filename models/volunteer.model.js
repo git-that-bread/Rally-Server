@@ -19,7 +19,7 @@ const volSchema = new theSchema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Organization'
 
-    }], 
+    }]
 },
 {
     timestamps: true,
