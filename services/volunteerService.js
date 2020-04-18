@@ -131,7 +131,7 @@ const getOrgList = async () => {
 
 /**
  * getShiftList - Service Method
- * This method is used to provide the volunteer with a list of events that belong to an org
+ * This method is used to provide the volunteer with the list of shifts that belong to the event
  * @method getShiftList
  * @param {eventInfo} eventInfo - the object ID of the event
  * @returns {flattenedShiftList} - an array of shift objects associated with the event

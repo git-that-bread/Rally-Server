@@ -59,6 +59,15 @@ router.route('/event/update').post(async (req, res, next) => {
     }
 });
 
+router.route('/event/shifts').get(async (req, res, next) => {
+    try {
+        let shiftList = await adminService.getShiftList(req.body);
+        return res.status(200).json({Shifts: shiftList});
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.route('/shift').post(async (req,res, next) => {
     try {
         let shiftUpdate = await adminService.updateShift(req.body);

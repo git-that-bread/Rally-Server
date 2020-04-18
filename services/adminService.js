@@ -248,6 +248,26 @@ const verifyShift = async (volShiftInfo) => {
  };
 
  /**
+ * getShiftList - Service Method
+ * This method is used to provide the admin with the list of shifts that belong to the event
+ * @method getShiftList
+ * @param {eventInfo} eventInfo - the object ID of the event
+ * @returns {flattenedShiftList} - an array of shift objects associated with the event
+ */
+const getShiftList = async (eventInfo) => {
+    const theEvent = await Event.findOne({_id: eventInfo.eventID});
+    var shiftIDs = theEvent.shifts;
+    var shiftList = [];
+    for(i = 0; i < shiftIDs.length; i++)
+    {
+        var theShift = await Shift.find({_id: shiftIDs[i]});
+        shiftList.push(theShift);
+    }
+    var flattenedShiftList = [].concat.apply([], shiftList);
+    return flattenedShiftList;
+};
+
+ /**
  * getVolunteerList - Service Method
  * This method is used to get a list of volunteers associated with an organization
  * 
@@ -297,6 +317,7 @@ module.exports = {
     updateShift,
     deleteShift,
     verifyShift,
+    getShiftList,
     getVolunteerList,
     deleteVolunteer
 };
