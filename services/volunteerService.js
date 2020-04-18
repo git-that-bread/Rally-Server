@@ -77,7 +77,7 @@ const volShiftDelete = async(volShiftInfo) => {
  * and the org's object ID to volunteer object's organizations[]
  * @method orgSignUp
  * @param {reqInfo} reqInfo 
- * @returns {} - void
+ * @returns {addOrgID} - the updated Volunteer object with the organization added
  */
 const orgSignUp = async(reqInfo) => {
     let volunteer = reqInfo.volunteerID

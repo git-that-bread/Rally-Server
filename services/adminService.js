@@ -236,7 +236,13 @@ const verifyShift = async (volShiftInfo) => {
  */
 const getVolunteerList = async (orgInfo) => {
     const theOrg = await Organization.findOne({_id: orgInfo.organizationID});
-    var volList = theOrg.volunteers;
+    var volIDs = theOrg.volunteers;
+    var volList = [];
+    for(i = 0; i < volIDs.length; i++)
+    {
+        var thevol = await Volunteer.find({_id: volIDs[i]});
+        volList.push(thevol);
+    } 
     return volList;
 };
 
