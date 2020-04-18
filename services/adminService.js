@@ -105,6 +105,7 @@ async function createShift(startTime, endTime, eventID, organizationID)
  **/   
 const createEvent = async (eventInfo) => {
 
+    let eventName = eventInfo.eventName;
     let startTime = parseDate(eventInfo.startTime);
     let endTime = parseDate(eventInfo.endTime);
     let organization = eventInfo.organization;
@@ -112,7 +113,7 @@ const createEvent = async (eventInfo) => {
     
     var numHours = calcHours(endTime, startTime);
     //Create new event object 
-    var newEvent = new Event({startTime, endTime, organization, location});
+    var newEvent = new Event({startTime, endTime, organization, location, eventName});
     
     const organizationID = organization;
     const eventID = newEvent.id;
@@ -164,7 +165,7 @@ const updateEvent = async (eventInfo) => {
     const updateEv = await Event.findOneAndUpdate(
         {_id: eventInfo.id},
         { $set: {startTime: eventInfo.startTime, endTime:eventInfo.endTime, 
-            organization: eventInfo.organization, location: eventInfo.organization}}, {new: true}
+            organization: eventInfo.organization, location: eventInfo.location, eventName: eventInfo.eventName}}, {new: true}
     );
     /*Will need to go and edit shifts associated with the event if the times are changed. This will be a mess
       because it would require an update to 
@@ -173,6 +174,25 @@ const updateEvent = async (eventInfo) => {
         3) The orgs event array
     */
    return updateEv;
+};
+
+/**
+ * getEventList - Service Method
+ * This method is used to provide the admin with a list of events that belong to their org
+ * @method getEventList
+ * @param {orgInfo} orgInfo - the object ID of the organization
+ * @returns {eventList} - an array of event objects associated with the organization
+ */
+const getEventList = async (orgInfo) => {
+    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+    var eventIDs = theOrg.events;
+    var eventList =[];
+    for(i = 0; i < eventIDs.length; i++)
+    {
+        var theEvent = await Event.find({_id: eventIDs[i]});
+        eventList.push(theEvent);
+    }
+    return eventList;
 };
 
 /**
@@ -232,7 +252,7 @@ const verifyShift = async (volShiftInfo) => {
  * 
  * @method getVolunteerList
  * @param {orgInfo} orgInfo - contains the org's object ID
- * @returns {} - void 
+ * @returns {volList} - an array of volunteer objects associated with the organization 
  */
 const getVolunteerList = async (orgInfo) => {
     const theOrg = await Organization.findOne({_id: orgInfo.organizationID});
@@ -271,6 +291,7 @@ module.exports = {
     createEvent,
     deleteEvent,
     updateEvent,
+    getEventList,
     updateShift,
     deleteShift,
     verifyShift,
