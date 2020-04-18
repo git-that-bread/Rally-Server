@@ -25,6 +25,15 @@ router.route('/shift').post(async (req, res, next) => {
     }
 });
 
+router.route('/shift').get(async (req, res, next) => {
+    try {
+        let volunteerShifts = await volunteerService.getVolShiftList(req.body);
+        return res.status(200).json({VolunteerShifts: volunteerShifts});
+    } catch (error) {
+        next(error);
+    }
+});
+
 router.route('/orgs').post(async (req, res, next) => {
     try {
         let orgSignedUp = await volunteerService.orgSignUp(req.body);

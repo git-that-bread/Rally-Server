@@ -31,11 +31,15 @@ const shiftSignUp = async (shiftInfo) => {
 
     const updateShiftWithVol = await Shift.findOneAndUpdate(
         {_id: shift},
-        {$push: {volunteers: volunteer}}
+        {$addToSet: {volunteers: volunteer}}
     );
     const updateEventWithVol = await Event.findOneAndUpdate(
         {_id: eventID},
-        {$push: {volunteers: volunteer}}
+        {$addToSet: {volunteers: volunteer}}
+    );
+    const updateVolWithVolShift = await Volunteer.findOneAndUpdate(
+        {_id: volunteer},
+        {$addToSet: {shifts: newVolShift.id}}
     );
 
     return savedVolShift;
@@ -86,12 +90,12 @@ const orgSignUp = async(reqInfo) => {
     //Update the volunteer object's orgs[], adding the org object ID
     const addOrgID = await Volunteer.findOneAndUpdate(
         {_id: volunteer},
-        {$push: {organizations: org}}, {new: true}
+        {$addToSet: {organizations: org}}, {new: true}
     );
     //Update the org object's volunteers[], adding the volunteer object ID
     const addVolID = await Organization.findOneAndUpdate(
         {_id: org},
-        {$push: {volunteers: volunteer}}, {new: true}
+        {$addToSet: {volunteers: volunteer}}, {new: true}
     );
 
     return addOrgID;
@@ -130,6 +134,26 @@ const getOrgList = async () => {
 };
 
 /**
+ * getVolShiftList - Service Method
+ * This method is used to provide the volunteer with the list of volunteerShifts associated with their account
+ * @method getVolShiftList
+ * @param {volInfo} volInfo - volID, the object ID of the volunteer
+ * @returns {flattenedVolShiftList} - an array of volunteerShift objects associated with the volunteer
+ */
+const getVolShiftList = async (volInfo) => {
+    const theVol = await Volunteer.findOne({_id: volInfo.volID});
+    var volShiftIDs = theVol.shifts;
+    var volShiftList = [];
+    for(i = 0; i < volShiftIDs.length; i++)
+    {
+        var theVolShift = await volShift.find({_id: volShiftIDs[i]});
+        volShiftList.push(theVolShift);
+    }
+    var flattenedVolShiftList = [].concat.apply([], volShiftList);
+    return flattenedVolShiftList;
+};
+
+/**
  * getShiftList - Service Method
  * This method is used to provide the volunteer with the list of shifts that belong to the event
  * @method getShiftList
@@ -154,6 +178,7 @@ module.exports = {
     volShiftDelete,
     getEventList,
     getOrgList,
+    getVolShiftList,
     getShiftList,
     orgSignUp
 }
