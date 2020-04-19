@@ -87,9 +87,6 @@ async function createShiftsArray(globalStart, globalEnd, numHours, eventID, orga
 async function createShift(startTime, endTime, eventID, organizationID)
 {
     //create shift object
-    console.log('creating shift, start is: ' + startTime);
-    console.log('creating shift, end is: ' + endTime);
-    //console.log('this eventID is: ' + eventID);
     const newShift = new Shift({startTime, endTime, eventID, organizationID});
     const savedShift = await newShift.save();
     //return shift object
@@ -108,6 +105,7 @@ async function createShift(startTime, endTime, eventID, organizationID)
  **/   
 const createEvent = async (eventInfo) => {
 
+    let eventName = eventInfo.eventName;
     let startTime = parseDate(eventInfo.startTime);
     let endTime = parseDate(eventInfo.endTime);
     let organization = eventInfo.organization;
@@ -115,12 +113,11 @@ const createEvent = async (eventInfo) => {
     
     var numHours = calcHours(endTime, startTime);
     //Create new event object 
-    var newEvent = new Event({startTime, endTime, organization, location});
+    var newEvent = new Event({startTime, endTime, organization, location, eventName});
     
     const organizationID = organization;
     const eventID = newEvent.id;
     const savedEvent = await newEvent.save();
-    //console.log('eventID is: ' + eventID);
     //Create shifts. 
     var fullArray = await createShiftsArray(startTime, endTime, numHours, eventID, organizationID);
 
@@ -138,23 +135,23 @@ const createEvent = async (eventInfo) => {
 };
 /**
  * deleteEvent - Service Method
- * This method is used to delete and event. It first deletes all the shifts corresponding to that event, then deletes the event itself
+ * This method is used to delete and event. It first deletes all the shifts corresponding to that event, deletes the event itself
  * then updates the corresponding organization to remove the event from the events[] array
  * @method deleteEvent
- * @param {object} eventInfo - An object containing the event object ID (id) and the organization id (organization)
+ * @param {object} eventInfo - contains the event object ID (eventID)
  * @returns {} - void
  */
 const deleteEvent = async (eventInfo) => {
+    const theEvent = await Event.findOne({_id: eventInfo.eventID});
     //First delete all corresponding Shifts to the event
-    const deleteShifts = await Shift.deleteMany({eventID: eventInfo.id});
+    const deleteShifts = await Shift.deleteMany({eventID: eventInfo.eventID});
     //Now delete event itself
-    const deleteEvent = await Event.findOneAndDelete({_id: eventInfo.id});
+    const deleteEvent = await Event.findOneAndDelete({_id: eventInfo.eventID});
     //Now update Org to remove this event from events[]
     const deleteEntryOrg = await Organization.findOneAndUpdate(
-        {_id: eventInfo.organization},
-        { $pull: {events: eventInfo.id}}
+        {_id: theEvent.organization},
+        { $pull: {events: eventInfo.eventID}}
     );
-
     return;
 };
 /**
@@ -168,7 +165,7 @@ const updateEvent = async (eventInfo) => {
     const updateEv = await Event.findOneAndUpdate(
         {_id: eventInfo.id},
         { $set: {startTime: eventInfo.startTime, endTime:eventInfo.endTime, 
-            organization: eventInfo.organization, location: eventInfo.organization}}, {new: true}
+            organization: eventInfo.organization, location: eventInfo.location, eventName: eventInfo.eventName}}, {new: true}
     );
     /*Will need to go and edit shifts associated with the event if the times are changed. This will be a mess
       because it would require an update to 
@@ -178,17 +175,81 @@ const updateEvent = async (eventInfo) => {
     */
    return updateEv;
 };
+/**
+ * viewPendingVols - Service Method
+ * This method is used for the admin the view the volunteers requesting to join the org
+ * @method viewPendingVols
+ * @param {orgInfo} orgInfo - object containing org object ID (orgID)
+ * @returns {flattenedPendingVolList} - Array of volunteer objects
+ */
+const viewPendingVols = async (orgInfo) => {
+    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+    var pendingVolIDs = theOrg.pendingVolunteers;
+    var pendingVolList = [];
+    for(i = 0; i < pendingVolIDs.length; i++)
+    {
+        var thePendingVol = await Volunteer.find({_id: pendingVolIDs[i]});
+        pendingVolList.push(thePendingVol);
+    }
+    var flattenedPendingVolList = [].concat.apply([], pendingVolList);
+    return flattenedPendingVolList;
+};
+
+/**
+ * approveVol - Service Method
+ * This method is used for the admin to approve a volunteer request to join the org
+ * @method approveVol
+ * @param {reqInfo} reqInfo - object containing org object ID (orgID), and volunteer object ID (volID)
+ * @returns {Volunteer} - Volunteer object added
+ */
+const approveVol = async (reqInfo) => {
+    //Remove the volunteer ID from the pendingVolunteers array of org
+    const removePending = await Organization.findOneAndUpdate(
+        {_id: reqInfo.orgID},
+        {$pull: {pendingVolunteers: reqInfo.volID}}
+    );
+    //Add the volunteer ID to the volunteer array of org
+    const addToVolArray = await Organization.findOneAndUpdate(
+        {_id: reqInfo.orgID},
+        {$addToSet: {volunteers: reqInfo.volID}}, {new: true}
+    );
+    //Update the volunteer object's orgs[], adding the org object ID
+    const updateVol = await Volunteer.findOneAndUpdate(
+        {_id: reqInfo.volID},
+        {$addToSet: {organizations: reqInfo.orgID}}, {new: true}
+    );
+    return updateVol;
+};
+/**
+ * getEventList - Service Method
+ * This method is used to provide the admin with a list of events that belong to their org
+ * @method getEventList
+ * @param {orgInfo} orgInfo - the object ID of the organization (orgID)
+ * @returns {flattenedEventList} - an array of event objects associated with the organization
+ */
+const getEventList = async (orgInfo) => {
+    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+    var eventIDs = theOrg.events;
+    var eventList =[];
+    for(i = 0; i < eventIDs.length; i++)
+    {
+        var theEvent = await Event.find({_id: eventIDs[i]});
+        eventList.push(theEvent);
+    }
+    var flattenedEventList = [].concat.apply([], eventList);
+    return flattenedEventList;
+};
 
 /**
  * verifyShift - Service Method
  * This method is used to update and verify a volunteerShift object
  * @method verifyShift
- * @param {shiftInfo} shiftInfo - contains the volunteerShift info, such as the corresponding shift ID for the volShift
+ * @param {shiftInfo} shiftInfo - contains the object ID for the volunteerShift object (volShiftID)
  * @returns {verifShift} - updated volShift object 
  */
 const verifyShift = async (volShiftInfo) => {
     const verifShift = await volShift.findOneAndUpdate(
-        {_id: volShiftInfo.id},
+        {_id: volShiftInfo.volShiftID},
         { $set: {verified: true} }, {new: true}
     );
     return verifShift;
@@ -205,7 +266,7 @@ const verifyShift = async (volShiftInfo) => {
  const updateShift = async (shiftInfo) => {
 
     const upShift = await Shift.findOneAndUpdate(
-        {_id: shiftInfo.id},
+        {_id: shiftInfo.shiftID},
         {$set: {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventID:shiftInfo.eventID}}, {new: true}
     );
     return upShift;
@@ -216,25 +277,93 @@ const verifyShift = async (volShiftInfo) => {
  * This method is used to delete a shift
  * 
  * @method deleteShift
- * @param {shiftInfo} shiftInfo - contains the shift's object ID
+ * @param {shiftInfo} shiftInfo - contains the shift's object ID (shiftID)
  * @returns {} - void 
  */
  const deleteShift = async (shiftInfo) => {
-    const dShift = await Shift.findOneAndDelete({_id: shiftInfo.id});
+    const theShift = await Shift.findOne({_id: shiftInfo.shiftID});
+    const dShift = await Shift.findOneAndDelete({_id: shiftInfo.shiftID});
     const deleteEntryEvent = await Event.findOneAndUpdate(
-        {_id: shiftInfo.eventID},
-        { $pull: {shifts: shiftInfo.id}}
+        {_id: theShift.eventID},
+        { $pull: {shifts: shiftInfo.shiftID}}
     );
-    const deleteVolShift = await volShift.deleteMany({shift: shiftInfo.id});
-
+    const deleteVolShift = await volShift.deleteMany({shift: shiftInfo.shiftID});
     return;
- }
+ };
+
+ /**
+ * getShiftList - Service Method
+ * This method is used to provide the admin with the list of shifts that belong to the event
+ * @method getShiftList
+ * @param {eventInfo} eventInfo - the object ID of the event (eventID)
+ * @returns {flattenedShiftList} - an array of shift objects associated with the event
+ */
+const getShiftList = async (eventInfo) => {
+    const theEvent = await Event.findOne({_id: eventInfo.eventID});
+    var shiftIDs = theEvent.shifts;
+    var shiftList = [];
+    for(i = 0; i < shiftIDs.length; i++)
+    {
+        var theShift = await Shift.find({_id: shiftIDs[i]});
+        shiftList.push(theShift);
+    }
+    var flattenedShiftList = [].concat.apply([], shiftList);
+    return flattenedShiftList;
+};
+
+ /**
+ * getVolunteerList - Service Method
+ * This method is used to get a list of volunteers associated with an organization
+ * 
+ * @method getVolunteerList
+ * @param {orgInfo} orgInfo - contains the org's object ID (orgID)
+ * @returns {flattenedVolList} - an array of volunteer objects associated with the organization 
+ */
+const getVolunteerList = async (orgInfo) => {
+    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+    var volIDs = theOrg.volunteers;
+    var volList = [];
+    for(i = 0; i < volIDs.length; i++)
+    {
+        var thevol = await Volunteer.find({_id: volIDs[i]});
+        volList.push(thevol);
+    } 
+    var flattenedVolList = [].concat.apply([], volList);
+    return flattenedVolList;
+};
+
+/**
+ * deleteVolunteer - Service Method
+ * This method is used to remove a volunteer from the organization's roster
+ * @method deleteVolunteer
+ * @param {reqInfo} reqInfo - contains org object Id (orgID) and volunteer object ID (volID)
+ * @returns {} - void
+ */
+const deleteVolunteer = async (reqInfo) => {
+    //Remove volunteer from org object's volunteers[] array
+    const delVolFromOrg = await Organization.findOneAndUpdate(
+        {_id: reqInfo.orgID},
+        {$pull: {volunteers: reqInfo.volID}}, {new: true}
+    );
+    //Remove org from volunteer object's orgs[] array
+    const delOrgFromVol = await Volunteer.findOneAndUpdate(
+        {_id: reqInfo.volID},
+        {$pull: {organizations: reqInfo.orgID}}, {new: true}
+    );
+    return delVolFromOrg;
+};
 
 module.exports = {
     createEvent,
     deleteEvent,
     updateEvent,
+    viewPendingVols,
+    approveVol,
+    getEventList,
     updateShift,
     deleteShift,
-    verifyShift
+    verifyShift,
+    getShiftList,
+    getVolunteerList,
+    deleteVolunteer
 };

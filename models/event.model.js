@@ -29,6 +29,10 @@ const eventSchema = new theSchema({
     location:
     {
         type: String
+    },
+    eventName:
+    {
+        type: String
     }
 },
 {

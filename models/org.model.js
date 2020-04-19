@@ -36,6 +36,10 @@ const orgSchema = new theSchema({
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Event'
     }],
+    pendingVolunteers: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'PendingVolunteer'
+    }],
     volunteers: [{
         type: mongoose.Schema.Types.ObjectId,
         ref: 'Volunteer'
