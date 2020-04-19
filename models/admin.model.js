@@ -13,7 +13,6 @@ const adminSchema = new theSchema({
     adminPhone:
     {
         type: Number,
-        unique: true,
         trim: true
     },
     organization:
