@@ -17,14 +17,15 @@ const volShift = require('../models/volunteerShift.model');
  * corresponding Shift object and Event object to add the volunteer to the volunteers[] array for both.
  * 
  * @method shiftSignUp
- * @param {shiftInfo} shiftInfo - object containing information about shift and event and also the volunteer object ID
+ * @param {reqInfo} reqInfo - object containing the shift object ID (shiftID), and volunteer object ID (volID)
  * @returns {savedVolShift} savedVolShift
  */
-const shiftSignUp = async (shiftInfo) => {
-    let volunteer = shiftInfo.volunteerID
-    let shift = shiftInfo.shiftID
-    let organizationID = shiftInfo.organizationID
-    let eventID = shiftInfo.eventID
+const shiftSignUp = async (reqInfo) => {
+    const theShift = await Shift.findOne({_id: reqInfo.shiftID});
+    let volunteer = reqInfo.volunteerID
+    let shift = reqInfo.shiftID
+    let organizationID = theShift.organizationID
+    let eventID = theShift.eventID
     var newVolShift = new volShift({volunteer, shift, organizationID, eventID});
 
     const savedVolShift = await newVolShift.save();
@@ -51,7 +52,7 @@ const shiftSignUp = async (shiftInfo) => {
  * go to the corresponding event and shift in order to delete the volunteer object ID from volunteers[] in each
  * 
  * @method volShiftDelete
- * @param {volShiftInfo} - an object containing the object ID of the volunteerShift object
+ * @param {volShiftInfo} - an object containing the object ID of the volunteerShift object (volShiftID)
  * @returns {} - void
  */
 
@@ -86,14 +87,14 @@ const volShiftDelete = async(volShiftInfo) => {
  * This method allows a volunteer to "sign up" with an organization. Adds volunteer object ID to org's volunteers[] array
  * and the org's object ID to volunteer object's organizations[]
  * @method orgSignUp
- * @param {reqInfo} reqInfo 
+ * @param {reqInfo} reqInfo - contains the org's object ID (orgID), and volunteer object ID (volID)
  * @returns {} - void
  */
 const orgSignUp = async(reqInfo) => {
     //Update the org object's pendingVolunteers[], adding the volunteer object ID
     const addVolID = await Organization.findOneAndUpdate(
-        {_id: reqInfo.organizationID},
-        {$addToSet: {pendingVolunteers: reqInfo.volunteerID}}, {new: true}
+        {_id: reqInfo.orgID},
+        {$addToSet: {pendingVolunteers: reqInfo.volID}}, {new: true}
     );
     return;
 };
@@ -102,7 +103,7 @@ const orgSignUp = async(reqInfo) => {
  * getEventList - Service Method
  * This method is used to provide the volunteer with a list of events that belong to an org
  * @method getEventList
- * @param {orgInfo} orgInfo - the object ID of the organization
+ * @param {orgInfo} orgInfo - the object ID of the organization (orgID)
  * @returns {flattenedEventList} - an array of event objects associated with the organization
  */
 const getEventList = async (orgInfo) => {
@@ -134,7 +135,7 @@ const getOrgList = async () => {
  * getVolShiftList - Service Method
  * This method is used to provide the volunteer with the list of volunteerShifts associated with their account
  * @method getVolShiftList
- * @param {volInfo} volInfo - volID, the object ID of the volunteer
+ * @param {volInfo} volInfo - the object ID of the volunteer (volID)
  * @returns {flattenedVolShiftList} - an array of volunteerShift objects associated with the volunteer
  */
 const getVolShiftList = async (volInfo) => {
@@ -154,7 +155,7 @@ const getVolShiftList = async (volInfo) => {
  * getShiftList - Service Method
  * This method is used to provide the volunteer with the list of shifts that belong to the event
  * @method getShiftList
- * @param {eventInfo} eventInfo - the object ID of the event
+ * @param {eventInfo} eventInfo - the object ID of the event (eventID)
  * @returns {flattenedShiftList} - an array of shift objects associated with the event
  */
 const getShiftList = async (eventInfo) => {
