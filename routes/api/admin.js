@@ -50,7 +50,7 @@ router.route('/event').post(async (req, res, next) => {
     }
 });
 
-router.route('/event').get(async (req, res, next) => {
+router.route('/events').get(async (req, res, next) => {
     try {
         let eventList = await adminService.getEventList(req.body);
         return res.status(200).json({Events: eventList});
