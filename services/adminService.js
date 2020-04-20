@@ -48,11 +48,11 @@ function parseDate(dateInput)
  * @param {Date} globalStart - Date containing the starting hour of the event itself
  * @param {Date} globalEnd - Date containing the ending hour of the event itself
  * @param {Number} numHours - the number of hours the event will last
- * @param {id} eventID - the object id of the event
+ * @param {id} eventId - the object id of the event
  * @param {id} organizationID - the object id of the organization associated with the event
  * @returns {Array} shiftArray - the array of shift objects
  **/
-async function createShiftsArray(globalStart, globalEnd, numHours, eventID, organizationID)
+async function createShiftsArray(globalStart, globalEnd, numHours, eventId, organizationID)
 {
     var shiftArray = [];
     var theStart = parseDate(globalStart);
@@ -63,7 +63,7 @@ async function createShiftsArray(globalStart, globalEnd, numHours, eventID, orga
         theEnd.setHours(globalStart.getHours() + i+1);
         //create the shift object given the start and end time parameters
         var shift = new Shift;
-        shift = await createShift(theStart, theEnd, eventID, organizationID);
+        shift = await createShift(theStart, theEnd, eventId, organizationID);
         //Take shift object that was returned by createShift and push it to shiftArray[]
         shiftArray.push(shift);
         //Now iterate the start time and end time by one hour
@@ -80,14 +80,14 @@ async function createShiftsArray(globalStart, globalEnd, numHours, eventID, orga
  * @method createShift
  * @param {Date} startTime - start time of the individual shift
  * @param {Date} endTime - end time of the individual shift
- * @param {id} eventID - object ID of the event associated with the shift
+ * @param {id} eventId - object ID of the event associated with the shift
  * @param {id} organizationID - object id of the organization associated with the shift and event
  * @returns {Shift} - The shift object created and saved to the database
  **/
-async function createShift(startTime, endTime, eventID, organizationID)
+async function createShift(startTime, endTime, eventId, organizationID)
 {
     //create shift object
-    const newShift = new Shift({startTime, endTime, eventID, organizationID});
+    const newShift = new Shift({startTime, endTime, eventId, organizationID});
     const savedShift = await newShift.save();
     //return shift object
     return savedShift;
@@ -97,7 +97,7 @@ async function createShift(startTime, endTime, eventID, organizationID)
  * createEvent - Service method
  * This helper method handles event creation. It will create the event object, then call other functions to create the shifts for the event, and finally 
  * update itself to add those shifts to the event object's shifts array. The event must be created before the shifts, otherwise the shifts will not have 
- * an eventID to associate themselves with.
+ * an eventId to associate themselves with.
  *
  * @method createEvent
  * @param {object} eventInfo  - An object representing the event info from a request.
@@ -116,10 +116,10 @@ const createEvent = async (eventInfo) => {
     var newEvent = new Event({startTime, endTime, organization, location, eventName});
     
     const organizationID = organization;
-    const eventID = newEvent.id;
+    const eventId = newEvent.id;
     const savedEvent = await newEvent.save();
     //Create shifts. 
-    var fullArray = await createShiftsArray(startTime, endTime, numHours, eventID, organizationID);
+    var fullArray = await createShiftsArray(startTime, endTime, numHours, eventId, organizationID);
 
     const updatedEventShiftArray = await Event.findOneAndUpdate(
        { _id: savedEvent.id },
@@ -138,19 +138,20 @@ const createEvent = async (eventInfo) => {
  * This method is used to delete and event. It first deletes all the shifts corresponding to that event, deletes the event itself
  * then updates the corresponding organization to remove the event from the events[] array
  * @method deleteEvent
- * @param {object} eventInfo - contains the event object ID (eventID)
+ * @param {object} eventInfo - contains the event object ID (eventId)
  * @returns {} - void
  */
-const deleteEvent = async (eventInfo) => {
-    const theEvent = await Event.findOne({_id: eventInfo.eventID});
+const deleteEvent = async (eventId) => {
+    console.log("delete event")
+    const theEvent = await Event.findOne({_id: eventId});
     //First delete all corresponding Shifts to the event
-    const deleteShifts = await Shift.deleteMany({eventID: eventInfo.eventID});
+    const deleteShifts = await Shift.deleteMany({eventId: eventId});
     //Now delete event itself
-    const deleteEvent = await Event.findOneAndDelete({_id: eventInfo.eventID});
+    const deleteEvent = await Event.findOneAndDelete({_id: eventId});
     //Now update Org to remove this event from events[]
     const deleteEntryOrg = await Organization.findOneAndUpdate(
         {_id: theEvent.organization},
-        { $pull: {events: eventInfo.eventID}}
+        { $pull: {events: eventId}}
     );
     return;
 };
@@ -227,13 +228,16 @@ const approveVol = async (reqInfo) => {
  * @param {orgInfo} orgInfo - the object ID of the organization (orgID)
  * @returns {flattenedEventList} - an array of event objects associated with the organization
  */
-const getEventList = async (orgInfo) => {
-    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
-    var eventIDs = theOrg.events;
+const getEventList = async (orgId) => {
+    const theOrg = await Organization.findOne({_id: orgId});
+    if(!theOrg) {
+        throw ({ status: 404, code: 'ORG_MISSING', message: 'No organization associated with admin user found.' });
+    }
+    var eventIds = theOrg.events;
     var eventList =[];
-    for(i = 0; i < eventIDs.length; i++)
+    for(i = 0; i < eventIds.length; i++)
     {
-        var theEvent = await Event.find({_id: eventIDs[i]});
+        var theEvent = await Event.find({_id: eventIds[i]});
         eventList.push(theEvent);
     }
     var flattenedEventList = [].concat.apply([], eventList);
@@ -267,7 +271,7 @@ const verifyShift = async (volShiftInfo) => {
 
     const upShift = await Shift.findOneAndUpdate(
         {_id: shiftInfo.shiftID},
-        {$set: {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventID:shiftInfo.eventID}}, {new: true}
+        {$set: {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventId:shiftInfo.eventId}}, {new: true}
     );
     return upShift;
  };
@@ -284,7 +288,7 @@ const verifyShift = async (volShiftInfo) => {
     const theShift = await Shift.findOne({_id: shiftInfo.shiftID});
     const dShift = await Shift.findOneAndDelete({_id: shiftInfo.shiftID});
     const deleteEntryEvent = await Event.findOneAndUpdate(
-        {_id: theShift.eventID},
+        {_id: theShift.eventId},
         { $pull: {shifts: shiftInfo.shiftID}}
     );
     const deleteVolShift = await volShift.deleteMany({shift: shiftInfo.shiftID});
@@ -295,11 +299,11 @@ const verifyShift = async (volShiftInfo) => {
  * getShiftList - Service Method
  * This method is used to provide the admin with the list of shifts that belong to the event
  * @method getShiftList
- * @param {eventInfo} eventInfo - the object ID of the event (eventID)
+ * @param {eventInfo} eventInfo - the object ID of the event (eventId)
  * @returns {flattenedShiftList} - an array of shift objects associated with the event
  */
 const getShiftList = async (eventInfo) => {
-    const theEvent = await Event.findOne({_id: eventInfo.eventID});
+    const theEvent = await Event.findOne({_id: eventInfo.eventId});
     var shiftIDs = theEvent.shifts;
     var shiftList = [];
     for(i = 0; i < shiftIDs.length; i++)

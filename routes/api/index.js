@@ -11,8 +11,9 @@ const authRouter = require('./auth');
 router.use('/auth', authRouter);
 
 const adminRouter = require('./admin');
-adminRouter.use('/', middleware.checkAuthentication);
 router.use('/admin', adminRouter);
+adminRouter.use('/', middleware.checkAuthentication);
+
 
 const volRouter = require('./volunteer');
 volRouter.use('/', middleware.checkAuthentication);
