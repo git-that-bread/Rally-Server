@@ -39,4 +39,20 @@ router.route('/login').post(middleware.login.validateLogin, async (req, res, nex
     }
 });
 
+
+/**
+ * GET - Route Serving user retrieval (upon authorization)
+ * @name get/getUser
+ * @function
+ * @memberof module:routers/auth~authRouter
+ */
+router.route('/getUser').get(middleware.checkAuthentication, async (req, res, next) => {
+    try {
+        const user = await userService.getUser(req.user);
+        return res.status(200).json({user});
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;

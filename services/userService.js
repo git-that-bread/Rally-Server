@@ -140,7 +140,62 @@ const logIn = async (userInfo) => {
     throw ({ status: 401, code: 'LOGIN_INVALID', message: 'Invalid authentication credentials.' });
 }
 
+/**
+ * getUnderlyingUser - Service method
+ * This service method retrieves the underlying user associated with a User object
+ *
+ * @method userService.getUnderlyingUser
+ * @param {User} userId - A User object id
+ * @returns {object} - An object representing a Volunteer or Admin object.
+ * @memberof module:services/userService~userService
+ **/
+const getUnderlyingUser = async (id, userType) => {
+    let underlyingUser;
+    if(userType === 'admin') {
+        underlyingUser = await Admin.findById(id);
+    } else if(userType === 'volunteer') {
+        underlyingUser = await Volunteer.findById(id);
+    }
+    if(!underlyingUser) {
+        throw ({ status: 404, code: 'USER_NOT_EXISTS', message: 'No underlying user found.' });
+    }
+
+    return underlyingUser;
+}
+
+/**
+ * getUser - Service method
+ * This service method retrieves the user and underlying user
+ *
+ * @method userService.getUser
+ * @param {User} user - A User object
+ * @returns {object} - 
+ * @memberof module:services/userService~userService
+ **/
+const getUser = async (user) => {
+    if(!user._admin && !user._volunteer) {
+        throw ({ status: 404, code: 'UNDERLYING_USER_MISSING', message: 'No underlying user provided in the user object.' });
+    }
+    if(user._admin && user._volunteer) {
+        throw ({ status: 404, code: 'UNDERLYING_USER_INVALID', message: 'A user cannot have more than one underlying user.' });
+    }
+    const id = user._admin ? user._admin : user._volunteer;
+    const userType = user._admin ? 'admin' : 'volunteer';
+    const underlyingUser = await getUnderlyingUser(id, userType);
+    const userObj = {
+        _id: user._id,
+        name: underlyingUser.name,
+        username: user.username,
+        email: user.email,
+        userType,
+        underlyingUser
+    }
+
+    return userObj;
+}
+
 module.exports = {
     signUp,
-    logIn
+    logIn,
+    getUser
 };

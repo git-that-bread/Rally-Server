@@ -50,18 +50,19 @@ router.route('/event').post(async (req, res, next) => {
     }
 });
 
-router.route('/event').get(async (req, res, next) => {
+router.route('/events').get(async (req, res, next) => {
     try {
-        let eventList = await adminService.getEventList(req.body);
+        let eventList = await adminService.getEventList(req.query.orgId);
         return res.status(200).json({Events: eventList});
     } catch (error) {
         next(error);
     }
 });
 
-router.route('/event').delete(async (req, res, next) => {
+router.route('/event/:id').delete(async (req, res, next) => {
     try {
-        let eventD = await adminService.deleteEvent(req.body);
+        console.log("delete route")
+        let eventD = await adminService.deleteEvent(req.params.id);
         return res.status(200).json({data: eventD});
     } catch (error) {
         next(error);
