@@ -7,9 +7,9 @@ let Shift = require('../../models/shift.model');
 let volShift = require('../../models/volunteerShift.model');
 
 
-router.route('/shift').delete(async (req, res, next) => {
+router.route('/shift/:id').delete(async (req, res, next) => {
     try {
-        let deletedShift = await volunteerService.volShiftDelete(req.body);
+        let deletedShift = await volunteerService.volShiftDelete(req.params.id);
         return res.status(200).json({});
     } catch (error) {
         next(error);
@@ -25,9 +25,9 @@ router.route('/shift').post(async (req, res, next) => {
     }
 });
 
-router.route('/shift').get(async (req, res, next) => {
+router.route('/shift/:id').get(async (req, res, next) => {
     try {
-        let volunteerShifts = await volunteerService.getVolShiftList(req.body);
+        let volunteerShifts = await volunteerService.getVolShiftList(req.params.id);
         return res.status(200).json({VolunteerShifts: volunteerShifts});
     } catch (error) {
         next(error);
@@ -52,18 +52,18 @@ router.route('/orgs').get(async (req, res, next) => {
     }
 });
 
-router.route('/orgs/events').get(async (req, res, next) => {
+router.route('/orgs/events/:id').get(async (req, res, next) => {
     try {
-        let eventList = await volunteerService.getEventList(req.body);
+        let eventList = await volunteerService.getEventList(req.params.id);
         return res.status(200).json({Events: eventList});
     } catch (error) {
         next(error);
     }
 });
 
-router.route('/orgs/events/shifts').get(async (req, res, next) => {
+router.route('/orgs/events/shifts/:id').get(async (req, res, next) => {
     try {
-        let shiftList = await volunteerService.getShiftList(req.body);
+        let shiftList = await volunteerService.getShiftList(req.params.id);
         return res.status(200).json({Shifts: shiftList});
     } catch (error) {
         next(error);

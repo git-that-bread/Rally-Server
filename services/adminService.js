@@ -180,11 +180,11 @@ const updateEvent = async (eventInfo) => {
  * viewPendingVols - Service Method
  * This method is used for the admin the view the volunteers requesting to join the org
  * @method viewPendingVols
- * @param {orgInfo} orgInfo - object containing org object ID (orgID)
+ * @param {orgInfo} orgId - object containing org object ID (orgID)
  * @returns {flattenedPendingVolList} - Array of volunteer objects
  */
-const viewPendingVols = async (orgInfo) => {
-    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+const viewPendingVols = async (orgId) => {
+    const theOrg = await Organization.findOne({_id: orgId});
     var pendingVolIDs = theOrg.pendingVolunteers;
     var pendingVolList = [];
     for(i = 0; i < pendingVolIDs.length; i++)
@@ -281,17 +281,17 @@ const verifyShift = async (volShiftInfo) => {
  * This method is used to delete a shift
  * 
  * @method deleteShift
- * @param {shiftInfo} shiftInfo - contains the shift's object ID (shiftID)
+ * @param {shiftInfo} shiftId - contains the shift's object ID (shiftID)
  * @returns {} - void 
  */
- const deleteShift = async (shiftInfo) => {
-    const theShift = await Shift.findOne({_id: shiftInfo.shiftID});
-    const dShift = await Shift.findOneAndDelete({_id: shiftInfo.shiftID});
+ const deleteShift = async (shiftId) => {
+    const theShift = await Shift.findOne({_id: shiftId});
+    const dShift = await Shift.findOneAndDelete({_id: shiftId});
     const deleteEntryEvent = await Event.findOneAndUpdate(
         {_id: theShift.eventId},
-        { $pull: {shifts: shiftInfo.shiftID}}
+        { $pull: {shifts: shiftId}}
     );
-    const deleteVolShift = await volShift.deleteMany({shift: shiftInfo.shiftID});
+    const deleteVolShift = await volShift.deleteMany({shift: shiftId});
     return;
  };
 
@@ -302,8 +302,8 @@ const verifyShift = async (volShiftInfo) => {
  * @param {eventInfo} eventInfo - the object ID of the event (eventId)
  * @returns {flattenedShiftList} - an array of shift objects associated with the event
  */
-const getShiftList = async (eventInfo) => {
-    const theEvent = await Event.findOne({_id: eventInfo.eventId});
+const getShiftList = async (eventId) => {
+    const theEvent = await Event.findOne({_id: eventId});
     var shiftIDs = theEvent.shifts;
     var shiftList = [];
     for(i = 0; i < shiftIDs.length; i++)
@@ -323,8 +323,8 @@ const getShiftList = async (eventInfo) => {
  * @param {orgInfo} orgInfo - contains the org's object ID (orgID)
  * @returns {flattenedVolList} - an array of volunteer objects associated with the organization 
  */
-const getVolunteerList = async (orgInfo) => {
-    const theOrg = await Organization.findOne({_id: orgInfo.orgID});
+const getVolunteerList = async (orgId) => {
+    const theOrg = await Organization.findOne({_id: orgId});
     var volIDs = theOrg.volunteers;
     var volList = [];
     for(i = 0; i < volIDs.length; i++)
