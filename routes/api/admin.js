@@ -32,7 +32,16 @@ router.route('/volunteers/pending').post(async (req, res, next) => {
     }
 });
 
-router.route('/volunteers/remove').delete(async (req, res, next) => {
+router.route('/volunteers/pending/reject').post(async (req, res, next) => {
+    try {
+        let updatedOrg = await adminService.rejectVol(req.body);
+        return res.status(200).json({UpdatedOrg: updatedOrg });
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.route('/volunteers/remove').post(async (req, res, next) => {
     try {
         let updatedOrg = await adminService.deleteVolunteer(req.body);
         return res.status(200).json({updatedOrg});

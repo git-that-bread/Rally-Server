@@ -200,24 +200,24 @@ const viewPendingVols = async (orgId) => {
  * approveVol - Service Method
  * This method is used for the admin to approve a volunteer request to join the org
  * @method approveVol
- * @param {reqInfo} reqInfo - object containing org object ID (orgID), and volunteer object ID (volID)
+ * @param {reqInfo} reqInfo - object containing org object ID (orgId), and volunteer object ID (volId)
  * @returns {Volunteer} - Volunteer object added
  */
 const approveVol = async (reqInfo) => {
     //Remove the volunteer ID from the pendingVolunteers array of org
     const removePending = await Organization.findOneAndUpdate(
-        {_id: reqInfo.orgID},
-        {$pull: {pendingVolunteers: reqInfo.volID}}
+        {_id: reqInfo.orgId},
+        {$pull: {pendingVolunteers: reqInfo.volId}}
     );
     //Add the volunteer ID to the volunteer array of org
     const addToVolArray = await Organization.findOneAndUpdate(
-        {_id: reqInfo.orgID},
-        {$addToSet: {volunteers: reqInfo.volID}}, {new: true}
+        {_id: reqInfo.orgId},
+        {$addToSet: {volunteers: reqInfo.volId}}, {new: true}
     );
     //Update the volunteer object's orgs[], adding the org object ID
     const updateVol = await Volunteer.findOneAndUpdate(
-        {_id: reqInfo.volID},
-        {$addToSet: {organizations: reqInfo.orgID}}, {new: true}
+        {_id: reqInfo.volId},
+        {$addToSet: {organizations: reqInfo.orgId}}, {new: true}
     );
     return updateVol;
 };
@@ -248,12 +248,12 @@ const getEventList = async (orgId) => {
  * verifyShift - Service Method
  * This method is used to update and verify a volunteerShift object
  * @method verifyShift
- * @param {shiftInfo} shiftInfo - contains the object ID for the volunteerShift object (volShiftID)
+ * @param {shiftInfo} shiftInfo - contains the object ID for the volunteerShift object (volShiftId)
  * @returns {verifShift} - updated volShift object 
  */
 const verifyShift = async (volShiftInfo) => {
     const verifShift = await volShift.findOneAndUpdate(
-        {_id: volShiftInfo.volShiftID},
+        {_id: volShiftInfo.volShiftId},
         { $set: {verified: true} }, {new: true}
     );
     return verifShift;
@@ -270,7 +270,7 @@ const verifyShift = async (volShiftInfo) => {
  const updateShift = async (shiftInfo) => {
 
     const upShift = await Shift.findOneAndUpdate(
-        {_id: shiftInfo.shiftID},
+        {_id: shiftInfo.shiftId},
         {$set: {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventId:shiftInfo.eventId}}, {new: true}
     );
     return upShift;
@@ -340,21 +340,38 @@ const getVolunteerList = async (orgId) => {
  * deleteVolunteer - Service Method
  * This method is used to remove a volunteer from the organization's roster
  * @method deleteVolunteer
- * @param {reqInfo} reqInfo - contains org object Id (orgID) and volunteer object ID (volID)
+ * @param {reqInfo} reqInfo - contains org object Id (orgId) and volunteer object ID (volId)
  * @returns {} - void
  */
 const deleteVolunteer = async (reqInfo) => {
     //Remove volunteer from org object's volunteers[] array
+    console.log(reqInfo.volId);
+    console.log(reqInfo.orgId);
     const delVolFromOrg = await Organization.findOneAndUpdate(
-        {_id: reqInfo.orgID},
-        {$pull: {volunteers: reqInfo.volID}}, {new: true}
+        {_id: reqInfo.orgId},
+        {$pull: {volunteers: reqInfo.volId}}, {new: true}
     );
     //Remove org from volunteer object's orgs[] array
     const delOrgFromVol = await Volunteer.findOneAndUpdate(
-        {_id: reqInfo.volID},
-        {$pull: {organizations: reqInfo.orgID}}, {new: true}
+        {_id: reqInfo.volId},
+        {$pull: {organizations: reqInfo.orgId}}, {new: true}
     );
     return delVolFromOrg;
+};
+
+/**
+ * rejectVol - Service Method
+ * This method is used to reject a volunteers request to join an organization
+ * @method rejectVol
+ * @param {reqInfo} reqInfo - contains org object Id (orgId) and volunteer object ID (volId)
+ * @returns {delPendingVolFromOrg} - Updated org object with volunteer removed from pendingVolunteers[]
+ */
+const rejectVol = async (reqInfo) => {
+    const delPendingVolFromOrg = await Organization.findOneAndUpdate(
+        {_id: reqInfo.orgId},
+        {$pull: {pendingVolunteers: reqInfo.volId}}, {new: true}
+    );
+    return delPendingVolFromOrg;
 };
 
 module.exports = {
@@ -363,6 +380,7 @@ module.exports = {
     updateEvent,
     viewPendingVols,
     approveVol,
+    rejectVol,
     getEventList,
     updateShift,
     deleteShift,

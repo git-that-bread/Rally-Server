@@ -17,13 +17,13 @@ const volShift = require('../models/volunteerShift.model');
  * corresponding Shift object and Event object to add the volunteer to the volunteers[] array for both.
  * 
  * @method shiftSignUp
- * @param {reqInfo} reqInfo - object containing the shift object ID (shiftID), and volunteer object ID (volID)
+ * @param {reqInfo} reqInfo - object containing the shift object ID (shiftId), and volunteer object ID (volId)
  * @returns {savedVolShift} savedVolShift
  */
 const shiftSignUp = async (reqInfo) => {
-    const theShift = await Shift.findOne({_id: reqInfo.shiftID});
-    let volunteer = reqInfo.volunteerID
-    let shift = reqInfo.shiftID
+    const theShift = await Shift.findOne({_id: reqInfo.shiftId});
+    let volunteer = reqInfo.volId
+    let shift = reqInfo.shiftId
     let organizationID = theShift.organizationID
     let eventID = theShift.eventID
     var newVolShift = new volShift({volunteer, shift, organizationID, eventID});
@@ -93,8 +93,8 @@ const volShiftDelete = async(volShiftId) => {
 const orgSignUp = async(reqInfo) => {
     //Update the org object's pendingVolunteers[], adding the volunteer object ID
     const addVolID = await Organization.findOneAndUpdate(
-        {_id: reqInfo.orgID},
-        {$addToSet: {pendingVolunteers: reqInfo.volID}}, {new: true}
+        {_id: reqInfo.orgId},
+        {$addToSet: {pendingVolunteers: reqInfo.volId}}, {new: true}
     );
     return;
 };
