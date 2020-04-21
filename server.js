@@ -9,8 +9,22 @@ const app = express();
 // Connect Database
 connectDB();
 
+var whitelist = ['http://localhost:3000', 'https://master.d2chga3duas5jb.amplifyapp.com']
+var corsOptions = {
+  origin: function (origin, callback) {
+    if (whitelist.indexOf(origin) !== -1) {
+      callback(null, true)
+    } else {
+      callback(new Error('Not allowed by CORS'))
+    }
+  },
+  credentials: true
+}
+
 // cors
-app.use(cors({ origin: true, credentials: true }));
+app.use(cors(corsOptions));
+
+  
 
 // Init Middleware
 app.use(express.json({ extended: false }));
