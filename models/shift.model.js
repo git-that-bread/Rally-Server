@@ -20,7 +20,7 @@ const shiftSchema = new theSchema({
         type: Date,
         required: true
     },
-    eventID:
+    eventId:
     {
         type: mongoose.Schema.Types.ObjectId,
         required: true
