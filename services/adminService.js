@@ -306,7 +306,7 @@ const getShiftList = async (eventId) => {
  * @returns {flattenedVolList} - an array of volunteer objects associated with the organization 
  */
 const getVolunteerList = async (orgId) => {
-    const theOrg = await Vol.findOne({_id: orgId});
+    const theOrg = await Organization.findOne({_id: orgId});
     var volIDs = theOrg.volunteers;
     var volList = [];
     for(i = 0; i < volIDs.length; i++)
