@@ -23,7 +23,7 @@ var corsOptions = {
 }
 
 // cors
-app.use(cors(corsOptions));
+app.options('*', cors());
 
   
 

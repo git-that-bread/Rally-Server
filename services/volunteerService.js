@@ -24,8 +24,8 @@ const shiftSignUp = async (reqInfo) => {
     const theShift = await Shift.findOne({_id: reqInfo.shiftId});
     let volunteer = reqInfo.volId
     let shift = reqInfo.shiftId
-    let organizationID = theShift.organizationID
-    let eventID = theShift.eventID
+    let organizationID = theShift.organizationId
+    let eventID = theShift.eventId
     var newVolShift = new volShift({volunteer, shift, organizationID, eventID});
 
     const savedVolShift = await newVolShift.save();
