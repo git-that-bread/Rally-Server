@@ -57,6 +57,10 @@ async function createShift({startTime, endTime, eventId, organizationId, maxSpot
     //create shift object
     const newShift = new Shift({startTime, endTime, eventId, organizationId, maxSpots});
     const savedShift = await newShift.save();
+    const updateEvent = await Event.findOneAndUpdate(
+        {_id: eventId},
+        { $addToSet: {shifts: savedShift.id}}
+    );
     //return shift object
     return savedShift;
 }
@@ -222,6 +226,26 @@ const getEvent = async (eventId) => {
 };
 
 /**
+ * getVolsOfShift - Service Method
+ * This method is used to provide the admin with a list of volunteers that are registered for a shift
+ * @method getVolsOfShift
+ * @param {reqInfo} shiftId - the object ID of the shift (shiftId)
+ * @returns {flattenedVolList} - an array of volunteer objects
+ */
+const getVolsOfShift = async (shiftId) => {
+    const theShift = await Shift.findOne({_id: shiftId});
+    var volIds = theShift.volunteers;
+    var volList =[];
+    for(i = 0; i < volIds.length; i++)
+    {
+        var theVol = await Volunteer.find({_id: volIds[i]});
+        volList.push(theVol);
+    }
+    var flattenedVolList = [].concat.apply([], volList);
+    return flattenedVolList;
+};
+
+/**
  * getVolunteerShifts - Service Method
  * This method is used to retrieve list of  volunteerShift objects associated with an organization.
  * @method getVolunteerShifts
@@ -247,6 +271,20 @@ const verifyShift = async (volShiftInfo) => {
     );
     return verifShift;
 };
+
+/**
+ * getShift - Service Method
+ * This method is retrieve an individual shift object
+ * 
+ * @method getShift
+ * @param {shiftInfo} shiftId - contains the shift object ID. 
+ * @returns {theShift} - the shift object 
+ */
+const getShift = async (shiftId) => {
+
+    const theShift = await Shift.findOne({_id: shiftId});
+    return theShift;
+ };
 
 /**
  * updateShift - Service Method
@@ -372,5 +410,7 @@ module.exports = {
     getShiftList,
     getVolunteerList,
     deleteVolunteer,
-    getVolunteerShifts
+    getVolunteerShifts,
+    getVolsOfShift,
+    getShift
 };
