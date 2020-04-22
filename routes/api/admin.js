@@ -151,4 +151,13 @@ router.route('/volunteerShifts/:orgId').get(async (req,res, next) => {
     }
 });
 
+router.route('/shift/:id').get(async (req, res, next) => {
+    try {
+        let volList = await adminService.getVolsOfShift(req.params.id);
+        return res.status(200).json({data: volList});
+    } catch (error) {
+        next(error);
+    }
+});
+
 module.exports = router;
