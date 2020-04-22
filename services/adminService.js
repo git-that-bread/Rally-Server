@@ -273,6 +273,20 @@ const verifyShift = async (volShiftInfo) => {
 };
 
 /**
+ * getShift - Service Method
+ * This method is retrieve an individual shift object
+ * 
+ * @method getShift
+ * @param {shiftInfo} shiftId - contains the shift object ID. 
+ * @returns {theShift} - the shift object 
+ */
+const getShift = async (shiftId) => {
+
+    const theShift = await Shift.findOne({_id: shiftId});
+    return theShift;
+ };
+
+/**
  * updateShift - Service Method
  * This method is used to update a shift
  * 
@@ -397,5 +411,6 @@ module.exports = {
     getVolunteerList,
     deleteVolunteer,
     getVolunteerShifts,
-    getVolsOfShift
+    getVolsOfShift,
+    getShift
 };
