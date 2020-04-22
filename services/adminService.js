@@ -40,54 +40,22 @@ function parseDate(dateInput)
     return new Date(dateInput);
 }
 
-/** 
- * createShifts - Helper Method
- * This helper method will call the createShift method to create shift objects and populate the shifts array with them
- * 
- * @method createShiftsArray
- * @param {Date} globalStart - Date containing the starting hour of the event itself
- * @param {Date} globalEnd - Date containing the ending hour of the event itself
- * @param {Number} numHours - the number of hours the event will last
- * @param {id} eventId - the object id of the event
- * @param {id} organizationID - the object id of the organization associated with the event
- * @returns {Array} shiftArray - the array of shift objects
- **/
-async function createShiftsArray(globalStart, globalEnd, numHours, eventId, organizationID)
-{
-    var shiftArray = [];
-    var theStart = parseDate(globalStart);
-    var theEnd = parseDate(globalEnd);
-
-    for(i = 0; i < numHours; i++)
-    {
-        theEnd.setHours(globalStart.getHours() + i+1);
-        //create the shift object given the start and end time parameters
-        var shift = new Shift;
-        shift = await createShift(theStart, theEnd, eventId, organizationID);
-        //Take shift object that was returned by createShift and push it to shiftArray[]
-        shiftArray.push(shift);
-        //Now iterate the start time and end time by one hour
-        theStart.setHours(globalStart.getHours() + i+1); 
-    }
-    return shiftArray;
-}
-
 
 /** 
- *createShift - Helper Method
+ *createShift - 
  * This method creates and returns an individual shift object
  * 
  * @method createShift
  * @param {Date} startTime - start time of the individual shift
  * @param {Date} endTime - end time of the individual shift
  * @param {id} eventId - object ID of the event associated with the shift
- * @param {id} organizationID - object id of the organization associated with the shift and event
+ * @param {id} organizationId - object id of the organization associated with the shift and event
  * @returns {Shift} - The shift object created and saved to the database
  **/
-async function createShift(startTime, endTime, eventId, organizationID)
+async function createShift({startTime, endTime, eventId, organizationId, maxSpots})
 {
     //create shift object
-    const newShift = new Shift({startTime, endTime, eventId, organizationID});
+    const newShift = new Shift({startTime, endTime, eventId, organizationId, maxSpots});
     const savedShift = await newShift.save();
     //return shift object
     return savedShift;
@@ -110,21 +78,18 @@ const createEvent = async (eventInfo) => {
     let endTime = parseDate(eventInfo.endTime);
     let organization = eventInfo.organization;
     let location = eventInfo.location;
+    let shifts = eventInfo.shifts;
+
+    console.log(eventInfo)
+    console.log(eventInfo.shifts)
+    console.log(shifts)
     
     var numHours = calcHours(endTime, startTime);
     //Create new event object 
     var newEvent = new Event({startTime, endTime, organization, location, eventName});
     
     const organizationID = organization;
-    const eventId = newEvent.id;
     const savedEvent = await newEvent.save();
-    //Create shifts. 
-    var fullArray = await createShiftsArray(startTime, endTime, numHours, eventId, organizationID);
-
-    const updatedEventShiftArray = await Event.findOneAndUpdate(
-       { _id: savedEvent.id },
-       { $push: { shifts: fullArray } }
-    );
 
     const updateOrgWithEvent = await Organization.findOneAndUpdate(
         { _id: organizationID },
@@ -245,6 +210,30 @@ const getEventList = async (orgId) => {
 };
 
 /**
+ * getEvent - Service Method
+ * This method is used to retrieve an Event object
+ * @method getEvent
+ * @param {ObjectId} eventId - Object Id of an event
+ * @returns {Event} - An Event object.
+ */
+const getEvent = async (eventId) => {
+    const event = await Event.findOne({_id: eventId});
+    return event;
+};
+
+/**
+ * getVolunteerShifts - Service Method
+ * This method is used to retrieve list of  volunteerShift objects associated with an organization.
+ * @method getVolunteerShifts
+ * @param {ObjectId} organizationID - Object Id of an organization
+ * @returns {[VolunteerShift]} - An array of VolunteerShift objects.
+ */
+const getVolunteerShifts = async (organizationID) => {
+    const shifts = await volShift.find({organizationID});
+    return shifts;
+};
+
+/**
  * verifyShift - Service Method
  * This method is used to update and verify a volunteerShift object
  * @method verifyShift
@@ -271,10 +260,11 @@ const verifyShift = async (volShiftInfo) => {
 
     const upShift = await Shift.findOneAndUpdate(
         {_id: shiftInfo.shiftId},
-        {$set: {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventId:shiftInfo.eventId}}, {new: true}
+        {$set: {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventId:shiftInfo.eventId, maxSpots:shiftInfo.maxSpots}}, {new: true}
     );
     return upShift;
  };
+
 
  /**
  * deleteShift - Service Method
@@ -303,16 +293,8 @@ const verifyShift = async (volShiftInfo) => {
  * @returns {flattenedShiftList} - an array of shift objects associated with the event
  */
 const getShiftList = async (eventId) => {
-    const theEvent = await Event.findOne({_id: eventId});
-    var shiftIDs = theEvent.shifts;
-    var shiftList = [];
-    for(i = 0; i < shiftIDs.length; i++)
-    {
-        var theShift = await Shift.find({_id: shiftIDs[i]});
-        shiftList.push(theShift);
-    }
-    var flattenedShiftList = [].concat.apply([], shiftList);
-    return flattenedShiftList;
+    const shifts = await Shift.find({eventId});
+    return shifts;
 };
 
  /**
@@ -324,7 +306,7 @@ const getShiftList = async (eventId) => {
  * @returns {flattenedVolList} - an array of volunteer objects associated with the organization 
  */
 const getVolunteerList = async (orgId) => {
-    const theOrg = await Organization.findOne({_id: orgId});
+    const theOrg = await Vol.findOne({_id: orgId});
     var volIDs = theOrg.volunteers;
     var volList = [];
     for(i = 0; i < volIDs.length; i++)
@@ -382,10 +364,13 @@ module.exports = {
     approveVol,
     rejectVol,
     getEventList,
+    getEvent,
+    createShift,
     updateShift,
     deleteShift,
     verifyShift,
     getShiftList,
     getVolunteerList,
-    deleteVolunteer
+    deleteVolunteer,
+    getVolunteerShifts
 };

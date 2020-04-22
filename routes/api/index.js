@@ -7,6 +7,8 @@
 const router = require('express').Router();
 const middleware = require('./middleware/middleware');
 
+
+
 const authRouter = require('./auth');
 router.use('/auth', authRouter);
 

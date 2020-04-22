@@ -46,8 +46,9 @@ router.route('/').post((req, res) => {
     const startTime = req.body.startTime;
     const endTime = req.body.endTime;
     const organization = req.body.organization;
+    const maxSpots = req.body.maxSpots;
 
-    const newShift = new Shift({volunteers, startTime, endTime, organization});
+    const newShift = new Shift({volunteers, startTime, endTime, organization, maxSpots});
 
     newShift.save()
     .then(() => 

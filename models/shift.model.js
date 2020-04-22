@@ -25,7 +25,11 @@ const shiftSchema = new theSchema({
         type: mongoose.Schema.Types.ObjectId,
         required: true
     },
-    organizationID:
+    maxSpots:
+    {
+        type: Number
+    },
+    organizationId:
     {
         type: mongoose.Schema.Types.ObjectId,
         required: true

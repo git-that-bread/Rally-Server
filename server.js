@@ -1,6 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const middleware = require('./routes/api/middleware/middleware')
 
 const connectDB = require('./config/db');
 
@@ -30,10 +31,12 @@ app.use(cors(corsOptions));
 app.use(express.json({ extended: false }));
 
 app.get('/', (req, res) => res.send('Hello world!'));
+app.use(middleware.logger);
 
 // api router
 const apiRouter = require('./routes/api/index.js');
 app.use('/api', apiRouter);
+
 
 // Error Handling Middleware
 app.use(function (error, req, res, next) {

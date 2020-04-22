@@ -90,7 +90,26 @@ router.route('/event/update').post(async (req, res, next) => {
 router.route('/event/shifts/:id').get(async (req, res, next) => {
     try {
         let shiftList = await adminService.getShiftList(req.params.id);
-        return res.status(200).json({Shifts: shiftList});
+        console.log(req.params)
+        return res.status(200).json({shifts: shiftList});
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.route('/event/:id').get(async (req, res, next) => {
+    try {
+        let event = await adminService.getEvent(req.params.id);
+        return res.status(200).json({event});
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.route('/shift').put(async (req,res, next) => {
+    try {
+        let shiftUpdate = await adminService.updateShift(req.body);
+        return res.status(200).json({data: shiftUpdate});
     } catch (error) {
         next(error);
     }
@@ -98,8 +117,8 @@ router.route('/event/shifts/:id').get(async (req, res, next) => {
 
 router.route('/shift').post(async (req,res, next) => {
     try {
-        let shiftUpdate = await adminService.updateShift(req.body);
-        return res.status(200).json({data: shiftUpdate});
+        let shift = await adminService.createShift(req.body);
+        return res.status(200).json({shift});
     } catch (error) {
         next(error);
     }
@@ -118,6 +137,15 @@ router.route('/verify').post(async (req, res, next) => {
     try {
         let verifyShift = await adminService.verifyShift(req.body);
         return res.status(200).json({data: verifyShift});
+    } catch (error) {
+        next(error);
+    }
+});
+
+router.route('/volunteerShifts/:orgId').get(async (req,res, next) => {
+    try {
+        const volShifts = await adminService.getVolunteerShifts(req.params.orgId);
+        return res.status(200).json({volunteerShifts: volShifts});
     } catch (error) {
         next(error);
     }
