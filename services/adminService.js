@@ -286,15 +286,6 @@ const verifyShift = async (volShiftInfo) => {
         {_id: shiftInfo.shiftId},
         {$set: {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventId:shiftInfo.eventId, maxSpots:shiftInfo.maxSpots}}, {new: true}
     );
-    const volShifts = await volShift.find({shift: shiftInfo.shiftId});
-    for(i = 0; i < volShifts.length;i++)
-    {
-        const upVolShift = await volShift.findOneAndUpdate(
-            {_id: volShifts[i].id},
-            {$set : {startTime:shiftInfo.startTime, endTime:shiftInfo.endTime, eventId:shiftInfo.eventId}}
-        );
-    }
-
     return upShift;
  };
 
