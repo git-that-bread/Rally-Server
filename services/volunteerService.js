@@ -42,6 +42,10 @@ const shiftSignUp = async (reqInfo) => {
         {_id: volunteer},
         {$addToSet: {shifts: newVolShift.id}}
     );
+    const updateShiftWithVolShift = await Shift.findOneAndUpdate(
+        {_id: shift},
+        {$addToSet: {volunteerShifts: newVolShift.id}}
+    )
 
     return savedVolShift;
 }

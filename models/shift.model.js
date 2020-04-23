@@ -33,7 +33,11 @@ const shiftSchema = new theSchema({
     {
         type: mongoose.Schema.Types.ObjectId,
         required: true
-    }
+    },
+    volunteerShifts: [{
+        type: mongoose.Schema.Types.ObjectId,
+        ref: 'volunteerShift'
+    }]
 },
 {
     timestamps: true,
